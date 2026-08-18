@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Caller Search</title>
+  </head>
+  <body>
+    <main class="card">
+      <div class="status-row">
+        <span id="status-dot" class="status-dot" aria-hidden="true"></span>
+        <span id="status">Connecting to SwyxIt…</span>
+      </div>
+
+      <section id="caller" class="caller" hidden>
+        <p class="eyebrow">Incoming call</p>
+        <h1 id="caller-name">Unknown caller</h1>
+        <p id="caller-number" class="number"></p>
+        <p id="call-details" class="details"></p>
+        <a
+          id="search-link"
+          class="search-button"
+          target="_blank"
+          rel="noopener noreferrer"
+        >Search Google</a>
+      </section>
+
+      <p id="empty" class="empty">Waiting for an incoming call…</p>
+      <p id="error" class="error" role="alert" hidden></p>
+    </main>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
