@@ -122,18 +122,12 @@ async function handleLineState(
 searchLink.addEventListener('click', () => {
   if (!googleSearchUrl) return;
 
-  // Calling window.open directly inside the click handler preserves the user
-  // gesture that embedded browsers require when opening an external window.
-  const searchWindow = window.open(googleSearchUrl, '_blank');
-
-  if (searchWindow) {
-    searchWindow.opener = null;
-  } else {
-    void navigator.clipboard.writeText(googleSearchUrl).then(
-      () => showMessage('SwyxIt blocked the browser window. The Google search link has been copied—paste it into your browser.'),
-      () => showError('SwyxIt blocked the browser window and clipboard access. Open Google manually and search for the displayed number.'),
-    );
-  }
+  // SwyxIt blocks normal pop-up windows. On Windows, the registered Edge URI
+  // protocol can hand the search to the external Microsoft Edge application.
+  // Copy the normal HTTPS URL first so the user still has a fallback.
+  void navigator.clipboard.writeText(googleSearchUrl);
+  showMessage('Opening the search in Microsoft Edge. The link has also been copied.');
+  window.location.href = `microsoft-edge:${googleSearchUrl}`;
 });
 
 const callReconciliationTimer = window.setInterval(() => {
