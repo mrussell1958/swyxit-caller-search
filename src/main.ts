@@ -34,6 +34,13 @@ function setConnectionStatus(message: string, connected: boolean): void {
 
 function showError(message: string): void {
   error.textContent = message;
+  error.classList.remove('info');
+  error.hidden = false;
+}
+
+function showMessage(message: string): void {
+  error.textContent = message;
+  error.classList.add('info');
   error.hidden = false;
 }
 
@@ -47,6 +54,24 @@ function clearCaller(lineIndex: number): void {
   caller.hidden = true;
   empty.hidden = false;
   error.hidden = true;
+  error.classList.remove('info');
+}
+
+async function reconcileVisibleCall(): Promise<void> {
+  if (!visibleCall) return;
+
+  const { lineIndex, callId } = visibleCall;
+  const lines = await hub.GetLineDetails();
+  const line = lines[lineIndex];
+
+  if (
+    !line ||
+    line.callId !== callId ||
+    line.lineState === LineState.Inactive ||
+    line.lineState === LineState.Terminated
+  ) {
+    clearCaller(lineIndex);
+  }
 }
 
 async function handleLineState(
@@ -89,6 +114,7 @@ async function handleLineState(
 
   empty.hidden = true;
   error.hidden = true;
+  error.classList.remove('info');
   caller.hidden = false;
 }
 
@@ -103,9 +129,18 @@ searchLink.addEventListener('click', () => {
   if (searchWindow) {
     searchWindow.opener = null;
   } else {
-    showError('SwyxIt blocked the browser window. Allow pop-ups for this Web Extension and try again.');
+    void navigator.clipboard.writeText(googleSearchUrl).then(
+      () => showMessage('SwyxIt blocked the browser window. The Google search link has been copied—paste it into your browser.'),
+      () => showError('SwyxIt blocked the browser window and clipboard access. Open Google manually and search for the displayed number.'),
+    );
   }
 });
+
+const callReconciliationTimer = window.setInterval(() => {
+  void reconcileVisibleCall().catch((cause: unknown) => {
+    console.error(cause);
+  });
+}, 1000);
 
 hubBack.onConnectionStateChanged((event: ConnectionEvent) => {
   if (event === ConnectionEvent.Connected) {
@@ -123,6 +158,7 @@ hubBack.onLineStateChanged((lineIndex, lineState) => {
 });
 
 window.addEventListener('beforeunload', () => {
+  window.clearInterval(callReconciliationTimer);
   void connection.Disconnect(ConnectionReason.Shuttingdown, true);
 });
 

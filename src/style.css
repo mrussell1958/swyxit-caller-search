@@ -87,6 +87,13 @@ h1 {
 
 .empty { margin: 44px 0; color: #66727e; text-align: center; }
 .error { color: #b3261e; font-size: 13px; }
+.error.info { color: #4054d6; }
+.version {
+  margin: 18px 0 0;
+  color: #8a949d;
+  font-size: 11px;
+  text-align: right;
+}
 
 @media (prefers-color-scheme: dark) {
   :root, body { color: #e8eef3; background: #161b20; }
