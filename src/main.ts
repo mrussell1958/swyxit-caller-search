@@ -98,9 +98,11 @@ searchLink.addEventListener('click', () => {
 
   // Calling window.open directly inside the click handler preserves the user
   // gesture that embedded browsers require when opening an external window.
-  const searchWindow = window.open(googleSearchUrl, '_blank', 'noopener,noreferrer');
+  const searchWindow = window.open(googleSearchUrl, '_blank');
 
-  if (!searchWindow) {
+  if (searchWindow) {
+    searchWindow.opener = null;
+  } else {
     showError('SwyxIt blocked the browser window. Allow pop-ups for this Web Extension and try again.');
   }
 });
