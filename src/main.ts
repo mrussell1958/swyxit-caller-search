@@ -57,6 +57,20 @@ function clearCaller(lineIndex: number): void {
   error.classList.remove('info');
 }
 
+function numberForGoogleSearch(number: string): string {
+  const compactNumber = number.replace(/[\s().-]/g, '');
+
+  if (compactNumber.startsWith('+44')) {
+    return `0${compactNumber.slice(3)}`;
+  }
+
+  if (compactNumber.startsWith('0044')) {
+    return `0${compactNumber.slice(4)}`;
+  }
+
+  return compactNumber;
+}
+
 async function reconcileVisibleCall(): Promise<void> {
   if (!visibleCall) return;
 
@@ -109,7 +123,8 @@ async function handleLineState(
       : '',
   ].filter(Boolean).join(' · ');
 
-  googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(`"${line.peerNumber}"`)}`;
+  const searchNumber = numberForGoogleSearch(line.peerNumber);
+  googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(`"${searchNumber}"`)}`;
   searchLink.textContent = `Search Google for ${line.peerNumber}`;
 
   empty.hidden = true;
