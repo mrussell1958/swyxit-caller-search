@@ -12,12 +12,14 @@ const caller = element<HTMLElement>('caller');
 const callerName = element<HTMLHeadingElement>('caller-name');
 const callerNumber = element<HTMLParagraphElement>('caller-number');
 const callDetails = element<HTMLParagraphElement>('call-details');
-const searchLink = element<HTMLAnchorElement>('search-link');
+const searchLink = element<HTMLButtonElement>('search-link');
 const empty = element<HTMLParagraphElement>('empty');
 const error = element<HTMLParagraphElement>('error');
 
 const { connection, hub, hubBack } = CreateWebExtensionClient();
 const displayedCallByLine = new Map<number, number>();
+let visibleCall: { lineIndex: number; callId: number } | undefined;
+let googleSearchUrl = '';
 
 function element<T extends HTMLElement>(id: string): T {
   const result = document.getElementById(id);
@@ -35,12 +37,27 @@ function showError(message: string): void {
   error.hidden = false;
 }
 
+function clearCaller(lineIndex: number): void {
+  displayedCallByLine.delete(lineIndex);
+
+  if (visibleCall?.lineIndex !== lineIndex) return;
+
+  visibleCall = undefined;
+  googleSearchUrl = '';
+  caller.hidden = true;
+  empty.hidden = false;
+  error.hidden = true;
+}
+
 async function handleLineState(
   lineIndex: number,
   lineState: LineState,
 ): Promise<void> {
-  if (lineState === LineState.Inactive) {
-    displayedCallByLine.delete(lineIndex);
+  if (
+    lineState === LineState.Inactive ||
+    lineState === LineState.Terminated
+  ) {
+    clearCaller(lineIndex);
     return;
   }
 
@@ -55,6 +72,7 @@ async function handleLineState(
   if (displayedCallByLine.get(lineIndex) === line.callId) return;
 
   displayedCallByLine.set(lineIndex, line.callId);
+  visibleCall = { lineIndex, callId: line.callId };
 
   callerName.textContent = line.peerName || 'Unknown caller';
   callerNumber.textContent = line.peerNumber;
@@ -66,13 +84,26 @@ async function handleLineState(
       : '',
   ].filter(Boolean).join(' · ');
 
-  searchLink.href = `https://www.google.com/search?q=${encodeURIComponent(`"${line.peerNumber}"`)}`;
+  googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(`"${line.peerNumber}"`)}`;
   searchLink.textContent = `Search Google for ${line.peerNumber}`;
 
   empty.hidden = true;
   error.hidden = true;
   caller.hidden = false;
 }
+
+
+searchLink.addEventListener('click', () => {
+  if (!googleSearchUrl) return;
+
+  // Calling window.open directly inside the click handler preserves the user
+  // gesture that embedded browsers require when opening an external window.
+  const searchWindow = window.open(googleSearchUrl, '_blank', 'noopener,noreferrer');
+
+  if (!searchWindow) {
+    showError('SwyxIt blocked the browser window. Allow pop-ups for this Web Extension and try again.');
+  }
+});
 
 hubBack.onConnectionStateChanged((event: ConnectionEvent) => {
   if (event === ConnectionEvent.Connected) {
