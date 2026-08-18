@@ -1,6 +1,5 @@
 import {
   ConnectionEvent,
-  ConnectionReason,
   CreateWebExtensionClient,
   LineState,
 } from '@enreachde/swyx-web-extension-sdk';
@@ -164,11 +163,6 @@ hubBack.onLineStateChanged((lineIndex, lineState) => {
     console.error(cause);
     showError('Could not read the incoming call details.');
   });
-});
-
-window.addEventListener('beforeunload', () => {
-  window.clearInterval(callReconciliationTimer);
-  void connection.Disconnect(ConnectionReason.Shuttingdown, true);
 });
 
 connection.Connect().catch((cause: unknown) => {
